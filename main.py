@@ -6,20 +6,11 @@ Designed by: Ervin Pangilinan
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime as dt
 import sys
 from os import system, name
 
 # Functions
-
-def clearScreen():
-    # POST: Clears the console screen. 
-    
-    # For Windows
-    if name == 'nt':
-        _ = system('cls')
-    # For Mac and Linux (here, os.name is 'posix')
-    else:
-        _ = system('clear')
         
 def showMenu():
     # POST: Outputs all of the menu options. 
@@ -39,11 +30,15 @@ def historicAveragesQuery(area, data):
     years = [2020, 2021, 2022, 2023]
     
     for i in years:
+        
+        # Get all data for given year and area.
         query = data[(data['Date'].dt.year == i) & 
                      (data['Area'] == str("Area " + str(area)))]
         
         total = 0
         for index, row in query.iterrows():
+            
+            # Calculate the average for each year.
             total = total + int(row["Duration"])
             
         average = round(float(total / query.shape[0]), 2)
@@ -59,7 +54,7 @@ def makeBarGraph(graphDataDict, area):
     plt.style.use('_mpl-gallery')
     titleFont = {'family':'serif', 'size':'18'}
     axesFont = {'family':'serif', 'size':'14'}
-    fig = plt.figure(figsize = (8, 8))
+    fig = plt.figure(figsize = (5, 4))
     
     # Make a new, smaller DataFrame based on the passed dictionary.
     graphData = {"Year" : graphDataDict.keys(), 
@@ -95,7 +90,7 @@ def historicStageQuery(area, data, year):
         else:
             stageCount[row["Stage"]] = stageCount[row["Stage"]] + 1
     
-    # Sort the dictionary
+    # Sort the dictionary.
     keys = list(stageCount.keys())
     keys.sort()
     sortedStageCount = {i : stageCount[i] for i in keys}
@@ -128,7 +123,57 @@ def makePieChart(graphDataDict, area, year):
               str(area) + " Loadshedding Stage Percentages in " 
               + str(year), fontdict = titleFont)
     plt.show()
-      
+    
+def areaQuery(data, area):
+    # PRE: DataFrame and area number is passed in.
+    # POST: Returns a DataFrame containing frequencies for each year.
+    
+    years = [2020, 2021, 2022, 2023]
+    amCounts = []
+    pmCounts = []
+        
+    for year in years:
+        # Get all records about an area for specified year.
+        query = data[(data['Date'].dt.year == year) & 
+                     (data['Area'] == str("Area " + str(area)))]
+
+        # Count how many are AM or PM loadshedding times.
+        amCount = 0
+        pmCount = 0
+        for index, row in query.iterrows():
+            parsedTime = dt.datetime.strptime(row['Time'], '%H:%M')
+            noon = dt.datetime.strptime('12:00', '%H:%M')
+            if parsedTime.time() < noon.time():
+                amCount += 1
+            else:
+                pmCount += 1
+
+        # Add each count to a seperate list.
+        amCounts.append(amCount)
+        pmCounts.append(pmCount)
+        
+    # Create a dictionary where each list is a value.
+    areaDict = {'Year' : years, 
+                'AM Frequency' : amCounts,
+                'PM Frequency' : pmCounts}
+    
+    # Create a DataFrame based on the dictionary that was just created.
+    areaDF = pd.DataFrame.from_dict(areaDict)
+        
+    return areaDF
+            
+def makeFrequencyBarGraph(data, area):  
+    # PRE: Smaller DataFrame was created and area number is passed in.
+    # POST: Outputs the table for AM and PM frequencies.
+    
+    # Customize styling of the graph
+    plt.style.use('_mpl-gallery')
+    
+    # Create the bar graph.
+    data.plot(x = "Year", y = ["AM Frequency", "PM Frequency"], 
+              kind = "bar") 
+    plt.show()
+    
 #######################################################################
 
 # Main Program
@@ -136,12 +181,11 @@ pd.options.display.max_columns = 6
 df = pd.read_csv('loadsheddingData.csv', index_col = 0)
 df["Date"] = pd.to_datetime(df["Date"], format = '%Y-%m-%d')
 
-clearScreen()
 print("\t\t Cape Town Historical Loadshedding Data Records Program\n")
 showMenu()
 option = input("\nEnter an option: ")
 
-while option != 5:
+while option != "5":
     if option == "1":
         area = int(input("\nEnter the area number (1-18 only): "))
         queryDataDict = historicAveragesQuery(area, df)
@@ -154,7 +198,11 @@ while option != 5:
         makePieChart(queryDataDict, area, year)
         print()
     elif option == "3":
-        print("Still in progress...\n")
+        area = int(input("\nEnter the area number (1-18 only): "))
+        result = areaQuery(df, area)
+        print("\n\tData Points for Area", area, "\n\n", result)
+        makeFrequencyBarGraph(result, area)
+        print()
     elif option == "4":
         print("Still in progress...\n")
     elif option == "5":
