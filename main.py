@@ -8,7 +8,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import datetime as dt
 import sys
-from os import system, name
 
 # Functions
         
@@ -29,20 +28,18 @@ def historicAveragesQuery(area, data):
     historicAverages = {}
     years = [2020, 2021, 2022, 2023]
     
-    for i in years:
-        
+    for year in years:
         # Get all data for given year and area.
-        query = data[(data['Date'].dt.year == i) & 
+        query = data[(data['Date'].dt.year == year) & 
                      (data['Area'] == str("Area " + str(area)))]
         
         total = 0
         for index, row in query.iterrows():
-            
             # Calculate the average for each year.
             total = total + int(row["Duration"])
             
         average = round(float(total / query.shape[0]), 2)
-        historicAverages[i] = average
+        historicAverages[year] = average
         
     return historicAverages
 
@@ -117,8 +114,7 @@ def makePieChart(graphDataDict, area, year):
     titleFont = {'family':'serif', 'size':'24'}
     plt.figure(figsize = (16, 9))
     plt.pie(frequencies, labels = stages, colors = 
-            ['r', 'g', 'b', 'c', 'm', 'y'], autopct = '%1.1f%%', 
-            radius = 0.9)
+            ['r', 'g', 'b', 'c', 'm', 'y'], autopct = '%1.1f%%', radius = 0.9)
     plt.title("Area " + 
               str(area) + " Loadshedding Stage Percentages in " 
               + str(year), fontdict = titleFont)
@@ -153,8 +149,7 @@ def areaQuery(data, area):
         pmCounts.append(pmCount)
         
     # Create a dictionary where each list is a value.
-    areaDict = {'Year' : years, 
-                'AM Frequency' : amCounts,
+    areaDict = {'Year' : years, 'AM Frequency' : amCounts,
                 'PM Frequency' : pmCounts}
     
     # Create a DataFrame based on the dictionary that was just created.
@@ -170,18 +165,67 @@ def makeFrequencyBarGraph(data, area):
     plt.style.use('_mpl-gallery')
     
     # Create the bar graph.
-    data.plot(x = "Year", y = ["AM Frequency", "PM Frequency"], 
-              kind = "bar") 
+    data.plot(x = "Year", y = ["AM Frequency", "PM Frequency"], kind = "bar") 
     plt.show()
     
-#######################################################################
+def queryRecords(data):
+    # PRE: CSV file is read in and converted into a DataFrame.
+    # POST: Returns a DataFrame that matches the specified filters.
+        
+    # Prompt the user to input the search filters.
+    filters = {}
+    print("\nJust press ENTER to not specify a filter.\n")
+    for field in ["Date", "Time", "Stage", "Area", "Duration"]:
+        if field == "Date":
+            message = "Enter Date in YYYY-MM-DD format (Ex: 2020-01-01): "
+        elif field == "Time":
+            message = "Enter Time (24-hour clock, HH:MM): "
+        else:
+            message = "Enter " + field + ": "
+            
+        # Check to see if there is a response for each prompt.
+        response = input(message)
+        if len(response) == 0:
+            filters[field] = False
+        elif field == "Stage" or field == "Area":
+            filters[field] = str(field + " " + response).strip()
+        elif field == "Duration":
+            filters[field] = int(response)
+        else:
+            filters[field] = response.strip()
+            
+    # Apply the filters.
+    madeNewDataFrame = False
+    query = pd.DataFrame()
+    for field in filters:
+        # If-else branches account for fields with no response.
+        if filters[field] == False:
+            continue
+        elif madeNewDataFrame == False and field == "Date":
+                query = data[data["Date"] == pd.Timestamp(filters[field])]
+                madeNewDataFrame = True
+        elif madeNewDataFrame == False and field != "Date":
+            query = data[data[field] == filters[field]]
+            madeNewDataFrame = True
+        else:
+            query = query[query[field] == filters[field]]
+        
+    if query.empty:
+        print("\nNo results...\n")
+    else:
+        print("\nFound the following", query.shape[0] ,"record(s)...\n")
+        print(query.head(query.shape[0]))
+        print()
+        
+##############################################################################
 
 # Main Program
 pd.options.display.max_columns = 6
 df = pd.read_csv('loadsheddingData.csv', index_col = 0)
 df["Date"] = pd.to_datetime(df["Date"], format = '%Y-%m-%d')
 
-print("\t\t Cape Town Historical Loadshedding Data Records Program\n")
+print("\t\t Cape Town Historical Loadshedding Data Records Program")
+print("\t\tThis program contains records from Jan 2020 to May 2023.\n")
 showMenu()
 option = input("\nEnter an option: ")
 
@@ -204,7 +248,7 @@ while option != "5":
         makeFrequencyBarGraph(result, area)
         print()
     elif option == "4":
-        print("Still in progress...\n")
+        queryRecords(df)
     elif option == "5":
         sys.exit()
     else:
@@ -212,4 +256,3 @@ while option != "5":
         
     showMenu()
     option = input("\nEnter an option: ")
-
