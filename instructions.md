@@ -265,6 +265,7 @@ while option != "5":
     option = input("\nEnter an option: ")
 ```
 
+### If you want to get started with making your own queries, copy and paste this:
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
