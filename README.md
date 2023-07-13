@@ -24,7 +24,8 @@ that are included in the ***instructions.md*** file.
 
 ### loadsheddingData.csv / loadsheddingData.xlsx
 This file contains the raw data that the Python program will use. The included Python program uses the CSV file, so any modifications
-to the dataset, whether that be to cover more years, must be done to the CSV file.
+to the dataset, whether that be to cover more years, must be done to the CSV file. However, if you plan on adding more data, the program
+must be modified to account for additional years to check for.
 
 ### Load_Shedding_All_Areas_Schedule_and_Map.pdf
 This PDF file is a map showing off the load-shedding regions and what area numbers each region is linked to. This is good to show off at the 
