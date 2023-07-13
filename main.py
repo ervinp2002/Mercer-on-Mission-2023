@@ -52,7 +52,6 @@ def makeBarGraph(graphDataDict, area):
     plt.style.use('_mpl-gallery')
     titleFont = {'family': 'serif', 'size': '18'}
     axesFont = {'family': 'serif', 'size': '14'}
-    fig = plt.figure(figsize=(5, 4))
 
     # Make a new, smaller DataFrame based on the passed dictionary.
     graphData = {"Year": graphDataDict.keys(),
@@ -115,7 +114,6 @@ def makePieChart(graphDataDict, area, year):
     # Customize styling.
     plt.style.use('_mpl-gallery')
     titleFont = {'family': 'serif', 'size': '24'}
-    plt.figure(figsize=(16, 9))
     plt.pie(frequencies, labels=stages, colors=[
             'r', 'g', 'b', 'c', 'm', 'y'], autopct='%1.1f%%', radius=0.9)
     plt.title("Area " +
